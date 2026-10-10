@@ -132,7 +132,7 @@ def tikz_dfs_traversal(
         r'  \foreach \u/\v in {' + ','.join(interrupt_edges) + r'} \draw[dashed] (\u)--(\v);',
         r'  \foreach \u/\idx/\interrupts [count=\i from 1] in { %s } {' %
                ', '.join(f'{name[u]}/{anchor_child[dfs2tree[u]]}/{{{" ".join("(" + ",".join(map(str, i)) + ")" for i in interrupts[dfs2tree[u]])}}}' 
-                         for u in dfs_tree if dfs2tree[u].children),
+                         for u in sorted(dfs_tree, key=lambda u:name[u]) if dfs2tree[u].children),
         r'    \node at (' + str(x_right + 2) + r', -\i*0.6) {\u};',
         r'    \node at (' + str(x_right + 3) + r', -\i*0.6) {\idx};',
         r'    \node[right] at (' + str(x_right + 4) + r', -\i*0.6) {\interrupts};',

@@ -17,10 +17,17 @@ from figure_optimal_codec import tikz_optimal_codec
 FIGURE_FILE = 'figure_optimal_codec.tex'
 
 # Generate figure for optimal encoding
+
+class AltOptimalCodec(OptimalCodec):
+    '''Choose larger alpha to make decomposition example more interesting.'''
+
+    def alpha_fn(self, size: int, m: int):
+        return int(size ** 0.5)
+
 def figure_optimal_codec(matrix: Matrix) -> None:
     '''Create .tex figure with raw TikZ for optimal encoding of M.'''
 
-    codec = OptimalCodec()
+    codec = AltOptimalCodec()
     test_matrix(matrix, codec)
     tikz_optimal_codec(
         matrix,
@@ -59,3 +66,4 @@ while True:
         print(f'{trim=} {alpha=}')
         test_stress(SuboptimalCodec(alpha=alpha, trim=trim), tests=50)
         test_stress(OptimalCodec(trim=trim), tests=50)
+        test_stress(AltOptimalCodec(trim=trim), tests=50)

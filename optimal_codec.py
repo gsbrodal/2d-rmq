@@ -1,6 +1,7 @@
 '''Optimal matrix encoding and decoding of size O(m * n * log m) bits.'''
 
 from collections import defaultdict
+
 from matrix_codec import MatrixCodec
 from matrix import Matrix, Cell
 from matrix_cells import MonotonicMatrixCells
@@ -28,10 +29,18 @@ class OptimalCodec(MatrixCodec):
 
     final_state: State  # state after last encoding
 
+
+    def alpha_fn(self, size: int, m: int) -> int:
+        '''alpha parameter for constructing components.'''
+
+        return 1 + (int((size / 2) ** 0.5) - 1)  // (m + 1)
+
+
     def __init__(self, trim: bool = False) -> None:
         '''Init codec with possible trimming of redundant bits.'''
 
         self.trim = trim
+
 
     def encode(self, matrix: Matrix) -> BitSequence:
         '''Encode matrix M as a bit sequence.'''
@@ -51,12 +60,12 @@ class OptimalCodec(MatrixCodec):
         def l_connected_components(C: set[Cell], L: set[Cell]) -> list[list[Cell]]:
             '''Find L-connected components in graph with cells C.'''
 
-            adj: dict[Cell, list[Cell]] = {v: [] for v in C}
+            adjacency_list: dict[Cell, list[Cell]] = {v: [] for v in C}
             for u in C:
                 for v in C:
                     if u != v and l_adj(u, v, L):
-                        adj[u].append(v)
-            return connected_components(list(C), adj)
+                        adjacency_list[u].append(v)
+            return connected_components(list(C), adjacency_list)
 
         def l_neighbors(cell: Cell) -> list[Cell]:
             '''Return cells in M that are L-adjacent to c.'''
@@ -94,7 +103,8 @@ class OptimalCodec(MatrixCodec):
                 leaf = Tree()
                 node2cell[leaf] = cell
                 return leaf
-            alpha = int(size ** 0.5)
+            alpha = self.alpha_fn(size, n)
+            assert 1 <= alpha <= size
             children: list[Tree] = []
             C = C.copy()  # C minus constructed children components
             S = set()  # candidate cells for next component, S <= C
@@ -102,20 +112,23 @@ class OptimalCodec(MatrixCodec):
             for cell in decreasing:  # consider cells in decreasing value order
                 if cell in C and cell not in S:  # cell not yet in any component or S
                     S.add(cell)
+                    U_added = {cell}  # only for assertion
                     for U in l_connected_components(C - S, L | S):
                         if len(U) < alpha:
-#                           print(f'*** small component {U=} {alpha=} {S=} {C_=}')
                             S.update(U)
-                    # Created MyPy issue: github.com/python/mypy/issues/21104
-                    temp = max(l_connected_components(S, L), key=len)
-                    X: set[Cell] = set(temp)
+                            U_added.update(U)
+                    largest_component = max(l_connected_components(S, L), key=len)
+                    X: set[Cell] = set(largest_component)
                     if len(X) == size:  # Only one component, children=leaves
                         return Tree([decompose({cell}) for cell in decreasing])
                     if len(X) >= alpha:  # new component X, recursion adds X to L
+                        assert U_added <= X
+                        assert len(X) <= (1 + (m + 1) * (alpha - 1)) ** 2
                         children.append(decompose(X))
                         C -= X
                         S -= X
                 assert S <= C
+                assert all(len(U) >= alpha for U in l_connected_components(C, L))
                 assert all(len(U) >= alpha for U in l_connected_components(C - S, L | S))
                 assert all(len(U) < alpha for U in l_connected_components(S, L))
                 assert all(matrix[s] >= matrix[c] for s in S for c in C - S if l_adj(s, c, L))
@@ -175,7 +188,7 @@ class OptimalCodec(MatrixCodec):
                     dfs_child = find_interrupts(ancestor.children[child_idx], target)
                     dfs_children.append(dfs_child)
                 for nb in nbs:  # add right neighbors to visible_neighbor lists
-                    ancestor : Tree = node
+                    ancestor = node
                     while not nb.rank < ancestor.rank + ancestor.size_leaves:
                         ancestor = ancestor.parent
                     visible_neighbors[ancestor].append((anchor_leaf, nb))

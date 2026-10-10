@@ -1,6 +1,6 @@
 # The Encoding Complexity of Two Dimensional Range Minimum Data Structures
 
-This is a proof-of-concept implementation in Python 3.14 of matrix encoding 
+This is a proof-of-concept implementation in Python 3.15 of matrix encoding 
 schemes supporting range minimum queries from the following paper.
 
 * [1] _The Encoding Complexity of Two Dimensional Range Minimum Data Structures_,
@@ -29,7 +29,7 @@ time O(_n_<sup>3</sup> ⋅ _m_<sup>3</sup>) if the answer is the same before and
 
 ## Files
 
-The folder contains the following Python 3.14 files:
+The folder contains the following Python 3.15 files:
 
 * `main.py` main file, performing stress tests of the two codecs and generates
   latex tikz figures for the optimal encoding.
@@ -39,9 +39,6 @@ The folder contains the following Python 3.14 files:
 * `suboptimal_codec.py` implementation of the codec in [2, Section 3].
 
 * `optimal_codec.py` implementation of the codec in [2, Section 5]
-
-* `latex.py` functions to visualize examples of the optimal encodings described 
-  in [2, Section 5].
 
 * `test_rmq.py` integrity tests of encoding and decoding matrices.
 
